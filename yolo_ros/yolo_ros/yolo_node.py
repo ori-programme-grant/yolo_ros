@@ -44,6 +44,8 @@ from yolo_msgs.msg import KeyPoint2DArray
 from yolo_msgs.msg import Detection
 from yolo_msgs.msg import DetectionArray
 from yolo_msgs.srv import SetClasses
+from vision_msgs.msg import Detection2DArray, Detection2D
+from vision_msgs.msg import ObjectHypothesisWithPose
 
 
 class YoloNode(LifecycleNode):
@@ -117,6 +119,10 @@ class YoloNode(LifecycleNode):
         )
 
         self._pub = self.create_lifecycle_publisher(DetectionArray, "detections", 10)
+
+        # for fast integration with the GH tools
+        self._pub_legacy = self.create_lifecycle_publisher(Detection2DArray, "/flipped_detections_2d", 10)
+
         self.cv_bridge = CvBridge()
 
         super().on_configure(state)
@@ -182,6 +188,7 @@ class YoloNode(LifecycleNode):
         self.get_logger().info(f"[{self.get_name()}] Cleaning up...")
 
         self.destroy_publisher(self._pub)
+        self.destroy_publisher(self._pub_legacy)
 
         del self.image_qos_profile
 
@@ -377,6 +384,30 @@ class YoloNode(LifecycleNode):
             # publish detections
             detections_msg.header = msg.header
             self._pub.publish(detections_msg)
+
+            # publish legacy detections
+            legacy_detections_msg = Detection2DArray()
+            for i in range(len(results)):
+
+                aux_msg = Detection2D()
+
+                if results.boxes or results.obb and hypothesis and boxes:
+                    result = ObjectHypothesisWithPose()
+                    result.hypothesis.class_id = hypothesis[i]["class_name"]
+                    result.hypothesis.score = hypothesis[i]["score"]
+                    #aux_msg.id = hypothesis[i]["class_name"]
+                    aux_msg.results.append(result)
+
+                    aux_msg.bbox.center.position.x = boxes[i].center.position.x
+                    aux_msg.bbox.center.position.y = boxes[i].center.position.y
+                    aux_msg.bbox.size_x = boxes[i].size.x
+                    aux_msg.bbox.size_y = boxes[i].size.y
+
+                legacy_detections_msg.detections.append(aux_msg)
+            
+            legacy_detections_msg.header = msg.header
+            self._pub_legacy.publish(legacy_detections_msg)
+
 
             del results
             del cv_image
