@@ -121,7 +121,7 @@ class YoloNode(LifecycleNode):
         self._pub = self.create_lifecycle_publisher(DetectionArray, "detections", 10)
 
         # for fast integration with the GH tools
-        self._pub_legacy = self.create_lifecycle_publisher(Detection2DArray, "/flipped_detections_2d", 10)
+        self._pub_legacy = self.create_lifecycle_publisher(Detection2DArray, "flipped_detections_2d", 10)
 
         self.cv_bridge = CvBridge()
 

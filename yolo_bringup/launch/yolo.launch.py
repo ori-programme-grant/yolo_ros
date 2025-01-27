@@ -124,6 +124,13 @@ def generate_launch_description():
             description="Name of the input image topic",
         )
 
+        output_detection_topic = LaunchConfiguration("output_detection_topic")
+        output_detection_topic_cmd = DeclareLaunchArgument(
+            "output_detection_topic",
+            default_value="/flipped_detections_2d",
+            description="Name of the output detection topic",
+        )
+
         image_reliability = LaunchConfiguration("image_reliability")
         image_reliability_cmd = DeclareLaunchArgument(
             "image_reliability",
@@ -230,7 +237,8 @@ def generate_launch_description():
                     "image_reliability": image_reliability,
                 }
             ],
-            remappings=[("image_raw", input_image_topic)],
+            remappings=[("image_raw", input_image_topic),
+                        ("flipped_detections_2d", output_detection_topic)],
         )
 
         tracking_node_cmd = Node(
@@ -294,6 +302,7 @@ def generate_launch_description():
             agnostic_nms_cmd,
             retina_masks_cmd,
             input_image_topic_cmd,
+            output_detection_topic_cmd,
             image_reliability_cmd,
             input_depth_topic_cmd,
             depth_image_reliability_cmd,
