@@ -46,6 +46,7 @@ from yolo_msgs.msg import DetectionArray
 from yolo_msgs.srv import SetClasses
 from vision_msgs.msg import Detection2DArray, Detection2D
 from vision_msgs.msg import ObjectHypothesisWithPose
+from rcl_interfaces.msg import SetParametersResult
 
 
 class YoloNode(LifecycleNode):
@@ -72,6 +73,14 @@ class YoloNode(LifecycleNode):
         self.declare_parameter("image_reliability", QoSReliabilityPolicy.BEST_EFFORT)
 
         self.type_to_model = {"YOLO": YOLO, "NAS": NAS, "World": YOLOWorld}
+
+        self.add_on_set_parameters_callback(self.parameters_callback)
+
+    def parameters_callback(self, params):
+        for param in params:
+            if param.name == "threshold":
+                self.threshold = param.value
+        return SetParametersResult(successful=True)
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info(f"[{self.get_name()}] Configuring...")
@@ -329,7 +338,6 @@ class YoloNode(LifecycleNode):
     def image_cb(self, msg: Image) -> None:
 
         if self.enable:
-
             # convert image + predict
             cv_image = self.cv_bridge.imgmsg_to_cv2(msg)
             cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)

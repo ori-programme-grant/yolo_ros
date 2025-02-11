@@ -219,6 +219,7 @@ def generate_launch_description():
             executable="yolo_node",
             name="yolo_node",
             namespace=namespace,
+            output='screen',
             parameters=[
                 {
                     "model_type": model_type,
